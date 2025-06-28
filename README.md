@@ -11,7 +11,7 @@ A production-ready advanced quiz web application built with CodeIgniter 4 and My
   - One question displayed at a time
   - Numbered question palette with color indicators (grey for unattempted, green for answered)
   - Easy navigation between questions via palette
-  - Navigation buttons: Previous, Save, Next, and Stop
+  - Navigation buttons: Previous, Save, Next, and Submit
   - Timer countdown with auto-submit when time expires
 - **Question Management**:
   - Support for MCQs, Fill-in-the-Blank, and True/False (multiple types in one quiz)
@@ -27,7 +27,8 @@ A production-ready advanced quiz web application built with CodeIgniter 4 and My
 
 ## Technology Stack
 
-- **Backend**: PHP with CodeIgniter 4 framework, MySQL database
+- **Backend**: PHP 7.4+ with CodeIgniter 4 framework
+- **Database**: MySQL with MySQLi driver
 - **Frontend**: HTML, CSS, JavaScript, Bootstrap 5 (locally hosted)
 - **Libraries**: MathJax for rendering mathematical expressions, CKEditor for rich content editing
 - **Deployment**: Fully local setup (e.g., XAMPP), no reliance on external CDNs or APIs
@@ -39,48 +40,46 @@ A production-ready advanced quiz web application built with CodeIgniter 4 and My
 - PHP 7.4 or higher
 - MySQL 5.7 or higher
 - Composer
-- Web server (Apache/Nginx)
+- Web server (Apache/Nginx) - XAMPP, WAMP, or MAMP recommended
 
 ### Steps
 
-1. **Clone the repository**
-
-```bash
-git clone https://github.com/yourusername/quiz-app.git
-cd quiz-app
-```
+1. **Clone or download the project**
+   - Extract the project files to your web server directory (e.g., `htdocs` for XAMPP)
 
 2. **Install dependencies**
-
-```bash
-composer install
-```
+   ```bash
+   composer install
+   ```
 
 3. **Set up the database**
-
-- Create a new MySQL database
-- Import the database schema from `quiz_app_schema.sql`
-- Configure database connection in `app/Config/Database.php`
+   - Create a new MySQL database named `quiz_app`
+   - Import the database schema from `quiz_app_schema.sql`
+   - Update database configuration in `app/Config/Database.php` if needed
 
 4. **Configure the application**
-
-- Copy `env` to `.env` and update the configuration
-- Set your base URL in `app/Config/App.php`
+   - Copy `env` to `.env` and update the configuration
+   - Set your base URL in `app/Config/App.php` (e.g., `http://localhost/quiz_app/`)
 
 5. **Set proper permissions** (if on Linux/Unix)
+   ```bash
+   chmod -R 777 writable/
+   ```
 
-```bash
-chmod -R 777 writable/
-```
+6. **Download required libraries**
+   - Download CodeIgniter 4.6.1 from: https://api.github.com/repos/codeigniter4/framework/zipball/v4.6.1
+   - Download CKEditor 4.22.1 from: https://download.cksource.com/CKEditor/CKEditor/CKEditor%204.22.1/ckeditor_4.22.1_full.zip
+   - Download MathJax from: https://github.com/mathjax/MathJax/archive/master.zip
+   - Extract and place them in the appropriate directories
 
-6. **Start the application**
-
-- If using XAMPP, move the project to `htdocs` directory
-- Access the application at `http://localhost/quiz_app/`
+7. **Start the application**
+   - Access the application at `http://localhost/quiz_app/`
 
 ## Default Login Credentials
 
 - **Admin**: admin@example.com / admin123
+- **Teacher**: teacher@example.com / teacher123
+- **Student**: student1@example.com / student123
 
 ## User Roles and Permissions
 
@@ -103,7 +102,7 @@ chmod -R 777 writable/
 
 ## Database Schema
 
-The application uses the following main tables:
+The application uses MySQL with the following main tables:
 
 - `users` - User accounts (admin, teacher, student)
 - `roles` - User roles
@@ -119,9 +118,43 @@ The application uses the following main tables:
 - `attempt_answers` - Answers in a quiz attempt
 - `settings` - Application settings
 
+## Key Features Implementation
+
+### Quiz Taking Interface
+- **Single Question Display**: Shows one question at a time for focused attention
+- **Question Palette**: Visual navigation with color-coded status indicators
+- **Auto-Save**: Answers are automatically saved via AJAX
+- **Timer**: Real-time countdown with auto-submission when time expires
+- **Progress Tracking**: Visual indicators show answered vs unanswered questions
+
+### Question Types
+- **Multiple Choice**: Radio button selection with multiple options
+- **True/False**: Simple binary choice questions
+- **Fill in the Blank**: Text input with multiple acceptable answers
+
+### Content Management
+- **Rich Text Editor**: CKEditor integration for formatted content
+- **Mathematical Expressions**: MathJax support for equations
+- **Import/Export**: CSV-based bulk operations
+- **Image Support**: Upload and display images in questions
+
+### Security Features
+- **Role-based Access Control**: Different permissions for admin, teacher, student
+- **CSRF Protection**: Built-in security against cross-site request forgery
+- **Input Validation**: Server-side validation for all user inputs
+- **Session Management**: Secure session handling with timeout
+
 ## License
 
 This project is licensed under the MIT License.
+
+## Support
+
+For local server setup (XAMPP, WAMP, MAMP), ensure:
+- PHP 7.4+ is enabled
+- MySQL service is running
+- mod_rewrite is enabled for Apache
+- All required PHP extensions are installed
 
 ## Acknowledgements
 
