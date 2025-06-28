@@ -2,32 +2,18 @@
 
 namespace Config;
 
-// Create a new instance of our RouteCollection class.
 $routes = Services::routes();
 
-// Load the system's routing file first, so that the app and ENVIRONMENT
-// can override as needed.
 if (file_exists(SYSTEMPATH . 'Config/Routes.php')) {
     require SYSTEMPATH . 'Config/Routes.php';
 }
 
-/**
- * --------------------------------------------------------------------
- * Router Setup
- * --------------------------------------------------------------------
- */
 $routes->setDefaultNamespace('App\Controllers');
 $routes->setDefaultController('Home');
 $routes->setDefaultMethod('index');
 $routes->setTranslateURIDashes(false);
 $routes->set404Override();
-$routes->setAutoRoute(true);
-
-/**
- * --------------------------------------------------------------------
- * Route Definitions
- * --------------------------------------------------------------------
- */
+$routes->setAutoRoute(false);
 
 // Authentication Routes
 $routes->get('/', 'Auth::login');
@@ -41,7 +27,7 @@ $routes->get('dashboard', 'Dashboard::index', ['filter' => 'auth']);
 // Admin Routes
 $routes->group('admin', ['filter' => 'admin'], function($routes) {
     $routes->get('/', 'Admin\Dashboard::index');
-
+    
     // User Management
     $routes->get('users', 'Admin\Users::index');
     $routes->get('users/add', 'Admin\Users::add');
@@ -49,7 +35,7 @@ $routes->group('admin', ['filter' => 'admin'], function($routes) {
     $routes->get('users/edit/(:num)', 'Admin\Users::edit/$1');
     $routes->post('users/update/(:num)', 'Admin\Users::update/$1');
     $routes->get('users/delete/(:num)', 'Admin\Users::delete/$1');
-
+    
     // Class Management
     $routes->get('classes', 'Admin\Classes::index');
     $routes->get('classes/add', 'Admin\Classes::add');
@@ -60,7 +46,7 @@ $routes->group('admin', ['filter' => 'admin'], function($routes) {
     $routes->get('classes/students/(:num)', 'Admin\Classes::students/$1');
     $routes->post('classes/addstudent/(:num)', 'Admin\Classes::addStudent/$1');
     $routes->get('classes/removestudent/(:num)/(:num)', 'Admin\Classes::removeStudent/$1/$2');
-
+    
     // Category Management
     $routes->get('categories', 'Admin\Categories::index');
     $routes->get('categories/add', 'Admin\Categories::add');
@@ -68,7 +54,7 @@ $routes->group('admin', ['filter' => 'admin'], function($routes) {
     $routes->get('categories/edit/(:num)', 'Admin\Categories::edit/$1');
     $routes->post('categories/update/(:num)', 'Admin\Categories::update/$1');
     $routes->get('categories/delete/(:num)', 'Admin\Categories::delete/$1');
-
+    
     // Question Management
     $routes->get('questions', 'Admin\Questions::index');
     $routes->get('questions/add', 'Admin\Questions::add');
@@ -79,7 +65,8 @@ $routes->group('admin', ['filter' => 'admin'], function($routes) {
     $routes->get('questions/import', 'Admin\Questions::import');
     $routes->post('questions/importcsv', 'Admin\Questions::importCsv');
     $routes->get('questions/export', 'Admin\Questions::export');
-
+    $routes->get('questions/get-options/(:num)', 'Admin\Questions::getOptions/$1');
+    
     // Quiz Management
     $routes->get('quizzes', 'Admin\Quizzes::index');
     $routes->get('quizzes/add', 'Admin\Quizzes::add');
@@ -90,7 +77,7 @@ $routes->group('admin', ['filter' => 'admin'], function($routes) {
     $routes->get('quizzes/questions/(:num)', 'Admin\Quizzes::questions/$1');
     $routes->post('quizzes/addquestion/(:num)', 'Admin\Quizzes::addQuestion/$1');
     $routes->get('quizzes/removequestion/(:num)/(:num)', 'Admin\Quizzes::removeQuestion/$1/$2');
-
+    
     // Quiz Assignment
     $routes->get('assignments', 'Admin\Assignments::index');
     $routes->get('assignments/add', 'Admin\Assignments::add');
@@ -98,7 +85,7 @@ $routes->group('admin', ['filter' => 'admin'], function($routes) {
     $routes->get('assignments/edit/(:num)', 'Admin\Assignments::edit/$1');
     $routes->post('assignments/update/(:num)', 'Admin\Assignments::update/$1');
     $routes->get('assignments/delete/(:num)', 'Admin\Assignments::delete/$1');
-
+    
     // Results and Reports
     $routes->get('results', 'Admin\Results::index');
     $routes->get('results/view/(:num)', 'Admin\Results::view/$1');
@@ -106,20 +93,20 @@ $routes->group('admin', ['filter' => 'admin'], function($routes) {
     $routes->get('results/byclass/(:num)', 'Admin\Results::byClass/$1');
     $routes->get('results/bystudent/(:num)', 'Admin\Results::byStudent/$1');
     $routes->get('results/export/(:num)', 'Admin\Results::export/$1');
-
+    
     // Settings
     $routes->get('settings', 'Admin\Settings::index');
     $routes->post('settings/update', 'Admin\Settings::update');
 });
 
-// Teacher Routes (subset of admin)
+// Teacher Routes
 $routes->group('teacher', ['filter' => 'teacher'], function($routes) {
     $routes->get('/', 'Teacher\Dashboard::index');
-
+    
     // Limited Class Management
     $routes->get('classes', 'Teacher\Classes::index');
     $routes->get('classes/students/(:num)', 'Teacher\Classes::students/$1');
-
+    
     // Question Management
     $routes->get('questions', 'Teacher\Questions::index');
     $routes->get('questions/add', 'Teacher\Questions::add');
@@ -130,7 +117,8 @@ $routes->group('teacher', ['filter' => 'teacher'], function($routes) {
     $routes->get('questions/import', 'Teacher\Questions::import');
     $routes->post('questions/importcsv', 'Teacher\Questions::importCsv');
     $routes->get('questions/export', 'Teacher\Questions::export');
-
+    $routes->get('questions/get-options/(:num)', 'Teacher\Questions::getOptions/$1');
+    
     // Quiz Management
     $routes->get('quizzes', 'Teacher\Quizzes::index');
     $routes->get('quizzes/add', 'Teacher\Quizzes::add');
@@ -141,7 +129,7 @@ $routes->group('teacher', ['filter' => 'teacher'], function($routes) {
     $routes->get('quizzes/questions/(:num)', 'Teacher\Quizzes::questions/$1');
     $routes->post('quizzes/addquestion/(:num)', 'Teacher\Quizzes::addQuestion/$1');
     $routes->get('quizzes/removequestion/(:num)/(:num)', 'Teacher\Quizzes::removeQuestion/$1/$2');
-
+    
     // Quiz Assignment
     $routes->get('assignments', 'Teacher\Assignments::index');
     $routes->get('assignments/add', 'Teacher\Assignments::add');
@@ -149,7 +137,7 @@ $routes->group('teacher', ['filter' => 'teacher'], function($routes) {
     $routes->get('assignments/edit/(:num)', 'Teacher\Assignments::edit/$1');
     $routes->post('assignments/update/(:num)', 'Teacher\Assignments::update/$1');
     $routes->get('assignments/delete/(:num)', 'Teacher\Assignments::delete/$1');
-
+    
     // Results and Reports
     $routes->get('results', 'Teacher\Results::index');
     $routes->get('results/view/(:num)', 'Teacher\Results::view/$1');
@@ -177,19 +165,6 @@ $routes->group('api', ['filter' => 'auth'], function($routes) {
     $routes->get('quiz/get-time/(:num)', 'Api\Quiz::getRemainingTime/$1');
 });
 
-/**
- * --------------------------------------------------------------------
- * Additional Routing
- * --------------------------------------------------------------------
- *
- * There will often be times that you need additional routing and you
- * need it to be able to override any defaults in this file. Environment
- * based routes is one such time. require() additional route files here
- * to make that happen.
- *
- * You will have access to the $routes object within that file without
- * needing to reload it.
- */
 if (file_exists(APPPATH . 'Config/' . ENVIRONMENT . '/Routes.php')) {
     require APPPATH . 'Config/' . ENVIRONMENT . '/Routes.php';
 }

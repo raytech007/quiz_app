@@ -25,7 +25,7 @@
 
             // Change color when time is running low
             if (timeRemaining <= 60) { // Last minute
-                timerElement.classList.remove('bg-light', 'text-dark');
+                timerElement.classList.remove('bg-light', 'text-dark', 'bg-warning');
                 timerElement.classList.add('bg-danger', 'text-white');
             } else if (timeRemaining <= 300) { // Last 5 minutes
                 timerElement.classList.remove('bg-light', 'text-dark');
@@ -87,6 +87,7 @@
         }
 
         // Start the timer
+        updateTimerDisplay();
         startTimer();
     });
 })();

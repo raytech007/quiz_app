@@ -4,6 +4,9 @@
  */
 (function() {
     document.addEventListener('DOMContentLoaded', function() {
+        // Check if we're on a quiz taking page
+        if (!document.getElementById('questionContainer')) return;
+
         // Elements
         const questionContainer = document.getElementById('questionContainer');
         const prevBtn = document.getElementById('prevBtn');
@@ -31,17 +34,15 @@
 
             updateQuestionCounters();
             showQuestion(0);
-
-            // Set up event listeners
             setupEventListeners();
         }
 
         // Setup event listeners
         function setupEventListeners() {
             // Navigation buttons
-            prevBtn.addEventListener('click', showPreviousQuestion);
-            nextBtn.addEventListener('click', showNextQuestion);
-            saveBtn.addEventListener('click', saveCurrentAnswer);
+            if (prevBtn) prevBtn.addEventListener('click', showPreviousQuestion);
+            if (nextBtn) nextBtn.addEventListener('click', showNextQuestion);
+            if (saveBtn) saveBtn.addEventListener('click', saveCurrentAnswer);
 
             // Question palette buttons
             questionBtns.forEach(btn => {
@@ -52,15 +53,20 @@
             });
 
             // Submit button
-            submitQuizBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                $('#submitConfirmModal').modal('show');
-            });
+            if (submitQuizBtn) {
+                submitQuizBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const modal = new bootstrap.Modal(document.getElementById('submitConfirmModal'));
+                    modal.show();
+                });
+            }
 
             // Confirm submit button
-            confirmSubmitBtn.addEventListener('click', function() {
-                document.getElementById('quizForm').submit();
-            });
+            if (confirmSubmitBtn) {
+                confirmSubmitBtn.addEventListener('click', function() {
+                    document.getElementById('quizForm').submit();
+                });
+            }
         }
 
         // Show a specific question
@@ -78,39 +84,26 @@
             currentQuestion = quizQuestions[index];
 
             // Update question number display
-            currentQuestionNumber.textContent = index + 1;
+            if (currentQuestionNumber) {
+                currentQuestionNumber.textContent = index + 1;
+            }
 
             // Update question type display
-            questionTypeDisplay.textContent = getQuestionTypeLabel(currentQuestion.question_type);
+            if (questionTypeDisplay) {
+                questionTypeDisplay.textContent = getQuestionTypeLabel(currentQuestion.question_type);
+            }
 
             // Clear previous question
             questionContainer.innerHTML = '';
 
-            // Get the appropriate template based on question type
-            let template;
-            switch (currentQuestion.question_type) {
-                case 'multiple_choice':
-                    template = document.getElementById('template-multiple-choice').cloneNode(true);
-                    renderMultipleChoiceQuestion(template, currentQuestion);
-                    break;
-                case 'true_false':
-                    template = document.getElementById('template-true-false').cloneNode(true);
-                    renderTrueFalseQuestion(template, currentQuestion);
-                    break;
-                case 'fill_blank':
-                    template = document.getElementById('template-fill-blank').cloneNode(true);
-                    renderFillBlankQuestion(template, currentQuestion);
-                    break;
-                default:
-                    template = document.createElement('div');
-                    template.innerHTML = '<div class="alert alert-danger">Unsupported question type</div>';
-            }
-
-            // Show the template
-            questionContainer.appendChild(template);
+            // Render question based on type
+            renderQuestion(currentQuestion);
 
             // Handle navigation button states
             updateNavigationButtons();
+
+            // Update palette button states
+            updatePaletteButtons();
 
             // Initialize MathJax rendering for the new content
             if (window.MathJax) {
@@ -118,72 +111,133 @@
             }
         }
 
-        // Render multiple choice question
-        function renderMultipleChoiceQuestion(template, question) {
-            // Set question content
-            template.querySelector('.question-content').innerHTML = question.content;
+        // Render question based on type
+        function renderQuestion(question) {
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'question-display';
 
-            // Get options container
-            const optionsContainer = template.querySelector('.options-container');
+            // Question content
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'question-content mb-4';
+            contentDiv.innerHTML = `
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <strong>Question ${currentQuestionIndex + 1}:</strong>
+                    </div>
+                    <div class="card-body">
+                        ${question.content}
+                    </div>
+                </div>
+            `;
+            questionDiv.appendChild(contentDiv);
 
-            // Get the user's previous answer if any
+            // Answer section
+            const answerDiv = document.createElement('div');
+            answerDiv.className = 'answer-section';
+
+            switch (question.question_type_id) {
+                case 1: // Multiple choice
+                    renderMultipleChoiceOptions(answerDiv, question);
+                    break;
+                case 2: // True/False
+                    renderTrueFalseOptions(answerDiv, question);
+                    break;
+                case 3: // Fill in the blank
+                    renderFillBlankInput(answerDiv, question);
+                    break;
+                default:
+                    answerDiv.innerHTML = '<div class="alert alert-danger">Unsupported question type</div>';
+            }
+
+            questionDiv.appendChild(answerDiv);
+            questionContainer.appendChild(questionDiv);
+        }
+
+        // Render multiple choice options
+        function renderMultipleChoiceOptions(container, question) {
             const userAnswer = quizAnswers[question.id] ? quizAnswers[question.id].user_answer : null;
 
-            // Get options from AJAX
+            // Fetch options via AJAX
             fetch(`/admin/questions/get-options/${question.id}`)
                 .then(response => response.json())
                 .then(options => {
-                    // Create option elements
-                    options.forEach((option, index) => {
-                        const optionId = `option-${question.id}-${index}`;
+                    const optionsHtml = options.map((option, index) => {
                         const isChecked = userAnswer == option.id;
-
-                        const optionDiv = document.createElement('div');
-                        optionDiv.className = 'form-check mb-2';
-                        optionDiv.innerHTML = `
-                            <input class="form-check-input" type="radio" name="answer-${question.id}"
-                                id="${optionId}" value="${option.id}" ${isChecked ? 'checked' : ''}>
-                            <label class="form-check-label" for="${optionId}">
-                                ${option.option_text}
-                            </label>
+                        return `
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="radio" name="answer-${question.id}" 
+                                       id="option-${option.id}" value="${option.id}" ${isChecked ? 'checked' : ''}>
+                                <label class="form-check-label" for="option-${option.id}">
+                                    ${option.option_text}
+                                </label>
+                            </div>
                         `;
+                    }).join('');
 
-                        optionsContainer.appendChild(optionDiv);
-                    });
+                    container.innerHTML = `
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <strong>Select the correct answer:</strong>
+                            </div>
+                            <div class="card-body">
+                                ${optionsHtml}
+                            </div>
+                        </div>
+                    `;
                 })
                 .catch(error => {
                     console.error('Error loading options:', error);
-                    optionsContainer.innerHTML = '<div class="alert alert-danger">Error loading options</div>';
+                    container.innerHTML = '<div class="alert alert-danger">Error loading options</div>';
                 });
         }
 
-        // Render true/false question
-        function renderTrueFalseQuestion(template, question) {
-            // Set question content
-            template.querySelector('.question-content').innerHTML = question.content;
-
-            // Get the user's previous answer if any
+        // Render true/false options
+        function renderTrueFalseOptions(container, question) {
             const userAnswer = quizAnswers[question.id] ? quizAnswers[question.id].user_answer : null;
 
-            // Set the correct option if previously answered
-            if (userAnswer) {
-                const value = userAnswer === 'true' ? 'true' : 'false';
-                const input = template.querySelector(`input[value="${value}"]`);
-                if (input) input.checked = true;
-            }
+            container.innerHTML = `
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <strong>Select True or False:</strong>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="radio" name="answer-${question.id}" 
+                                   id="tf-true-${question.id}" value="true" ${userAnswer === 'true' ? 'checked' : ''}>
+                            <label class="form-check-label" for="tf-true-${question.id}">
+                                True
+                            </label>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="radio" name="answer-${question.id}" 
+                                   id="tf-false-${question.id}" value="false" ${userAnswer === 'false' ? 'checked' : ''}>
+                            <label class="form-check-label" for="tf-false-${question.id}">
+                                False
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
 
-        // Render fill in the blank question
-        function renderFillBlankQuestion(template, question) {
-            // Set question content
-            template.querySelector('.question-content').innerHTML = question.content;
-
-            // Get the user's previous answer if any
+        // Render fill in the blank input
+        function renderFillBlankInput(container, question) {
             const userAnswer = quizAnswers[question.id] ? quizAnswers[question.id].user_answer : '';
 
-            // Set the input value
-            const input = template.querySelector('#fill-blank-answer');
-            input.value = userAnswer;
+            container.innerHTML = `
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <strong>Enter your answer:</strong>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="fill-blank-${question.id}" 
+                                   name="answer-${question.id}" value="${userAnswer}" placeholder="Your answer">
+                            <label for="fill-blank-${question.id}">Your answer</label>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
 
         // Show previous question
@@ -207,34 +261,19 @@
             let answer = '';
 
             // Get answer based on question type
-            switch (currentQuestion.question_type) {
-                case 'multiple_choice':
-                    const mcSelected = document.querySelector(`input[name="answer-${currentQuestion.id}"]:checked`);
-                    answer = mcSelected ? mcSelected.value : '';
-                    break;
-                case 'true_false':
-                    const tfSelected = document.querySelector('input[name="tf-answer"]:checked');
-                    answer = tfSelected ? tfSelected.value : '';
-                    break;
-                case 'fill_blank':
-                    const fbInput = document.querySelector('#fill-blank-answer');
-                    answer = fbInput ? fbInput.value.trim() : '';
-                    break;
+            const answerInput = document.querySelector(`input[name="answer-${currentQuestion.id}"]:checked`) ||
+                               document.querySelector(`input[name="answer-${currentQuestion.id}"]`);
+
+            if (answerInput) {
+                answer = answerInput.value.trim();
             }
 
             // If answer is not empty, save it
             if (answer) {
                 saveAnswer(currentQuestion.id, answer);
                 answeredQuestions.add(currentQuestion.id.toString());
-
-                // Update the question button to green
-                const btn = document.querySelector(`.question-btn[data-question-id="${currentQuestion.id}"]`);
-                if (btn) {
-                    btn.classList.remove('btn-secondary');
-                    btn.classList.add('btn-success');
-                }
-
                 updateQuestionCounters();
+                updatePaletteButtons();
             }
         }
 
@@ -261,23 +300,40 @@
             });
         }
 
-        // Update navigation buttons (prev/next/submit)
+        // Update navigation buttons
         function updateNavigationButtons() {
-            // Disable prev button on first question
-            prevBtn.disabled = currentQuestionIndex === 0;
-
-            // Disable next button on last question
-            nextBtn.disabled = currentQuestionIndex === quizQuestions.length - 1;
+            if (prevBtn) prevBtn.disabled = currentQuestionIndex === 0;
+            if (nextBtn) nextBtn.disabled = currentQuestionIndex === quizQuestions.length - 1;
         }
 
-        // Update question counters in the submission modal
+        // Update palette buttons
+        function updatePaletteButtons() {
+            questionBtns.forEach(btn => {
+                const questionId = btn.dataset.questionId;
+                const index = parseInt(btn.dataset.questionIndex);
+
+                // Remove all classes
+                btn.classList.remove('btn-secondary', 'btn-success', 'btn-primary');
+
+                // Add appropriate class
+                if (index === currentQuestionIndex) {
+                    btn.classList.add('btn-primary'); // Current question
+                } else if (answeredQuestions.has(questionId)) {
+                    btn.classList.add('btn-success'); // Answered
+                } else {
+                    btn.classList.add('btn-secondary'); // Unanswered
+                }
+            });
+        }
+
+        // Update question counters
         function updateQuestionCounters() {
             const answered = answeredQuestions.size;
             const total = quizQuestions.length;
             const unanswered = total - answered;
 
-            answeredQuestionsCount.textContent = answered;
-            unansweredQuestionsCount.textContent = unanswered;
+            if (answeredQuestionsCount) answeredQuestionsCount.textContent = answered;
+            if (unansweredQuestionsCount) unansweredQuestionsCount.textContent = unanswered;
         }
 
         // Helper function to get question type label
